@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>考研英语词典</title>
+  <style>
+    /* 全局样式 */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      font-size: 32px;
+      text-align: center;
+      margin-bottom: 0px;
+      margin-top: 0px;
+    }
+
+    /* 章节选择 */
+    select {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 250px;
+      cursor: pointer;
+      background-color: #fff;
+      transition: border 0.3s ease;
+    }
+
+    select:focus {
+      border-color: #3498db;
+    }
+
+    label {
+      font-size: 18px;
+      margin-right: 10px;
+      color: #34495e;
+    }
+
+    /* 章节内容 */
+    .word {
+      font-size: 20px;
+      font-weight: bold;
+      color: #e74c3c;
+      display: inline-block;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .usphone {
+      font-size: 18px;
+      color: #3498db;
+      margin-left: 10px;
+    }
+
+    .definitions {
+      margin-left: 20px;
+      font-size: 16px;
+      color: #34495e;
+    }
+
+    .definitions div {
+      margin-bottom: 5px;
+    }
+
+    /* 喇叭按钮 */
+    .pronunciation-button {
+      cursor: pointer;
+      font-size: 18px;
+      color: #3498db;
+      margin-left: 10px;
+    }
+
+    /* 章节内容容器 */
+    #chapter-content {
+      width: 100%;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    /* 每个单词卡片样式 */
+    .word-card {
+      width: 23%;  /* 每行展示4个单词 */
+      margin-bottom: 10px;
+      background-color: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 错误提示 */
+    .error-message {
+      color: #e74c3c;
+      font-size: 18px;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      select {
+        width: 100%;
+      }
+
+      .word {
+        font-size: 18px;
+      }
+
+      .definitions {
+        font-size: 14px;
+      }
+
+      #chapter-content {
+        flex-direction: column;
+      }
+
+      .word-card {
+        width: 100%;  /* 小屏幕时每行显示1个单词 */
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>考研英语词典</h1>
+
+  <!-- 下拉框选择章节 -->
+  <div>
+    <label for="chapter-select">选择章节:</label>
+    <select id="chapter-select" onchange="loadChapter()">
+    </select>
+  </div>
+
+  <!-- 显示单词和释义 -->
+  <div id="chapter-content"></div>
+
+  <script>
+    // 章节数，假设你有 187 个章节
+    const totalChapters = 187;
+
+    let currentChapter = 1; // 当前章节
+
+    // 动态填充下拉框
+    const chapterSelect = document.getElementById('chapter-select');
+    for (let i = 1; i <= totalChapters; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = `Chapter ${i}`;
+      chapterSelect.appendChild(option);
+    }
+
+    // 设置默认选择为Chapter 1
+    chapterSelect.value = currentChapter;
+
+    // 根据章节选择加载内容
+    function loadChapter() {
+      const chapterIndex = chapterSelect.value || currentChapter;
+      const chapterContent = document.getElementById('chapter-content');
+      chapterContent.innerHTML = ''; // 清空现有内容
+
+      if (chapterIndex !== "") {
+        // 构造请求路径
+        const chapterUrl = `Chapters/chapter_${chapterIndex}.json`;
+
+        console.log(`加载章节：${chapterUrl}`); // 打印请求的 URL，方便调试
+
+        // 动态加载章节的 JSON 文件
+        fetch(chapterUrl)
+          .then(response => {
+            console.log(`响应状态：${response.status}`); // 打印响应状态码，查看是否为 200
+            if (!response.ok) {
+              throw new Error(`加载失败，状态码：${response.status}`);
+            }
+            return response.json();
+          })
+          .then(chapterData => {
+            chapterData.forEach(word => {
+              const wordCard = document.createElement('div');
+              wordCard.classList.add('word-card');
+
+              const wordElement = document.createElement('div');
+              wordElement.classList.add('word');
+              wordElement.textContent = word.word;
+
+              const usphoneElement = document.createElement('span');
+              usphoneElement.classList.add('usphone');
+              usphoneElement.textContent = `[${word.usphone}]`;  // 显示音标
+
+              // 添加发音按钮
+              const pronunciationButton = document.createElement('span');
+              pronunciationButton.classList.add('pronunciation-button');
+              pronunciationButton.textContent = '🔊';
+              pronunciationButton.onclick = function() {
+                playPronunciation(word.word);  // 点击按钮播放发音
+              };
+
+              wordElement.appendChild(usphoneElement);  // 将音标添加到单词旁边
+              wordElement.appendChild(pronunciationButton);  // 将喇叭按钮添加到单词后面
+
+              const definitionsElement = document.createElement('div');
+              definitionsElement.classList.add('definitions');
+              word.definitions.forEach(definition => {
+                const definitionElement = document.createElement('div');
+                definitionElement.textContent = definition;
+                definitionsElement.appendChild(definitionElement);
+              });
+
+              wordCard.appendChild(wordElement);
+              wordCard.appendChild(definitionsElement);
+              chapterContent.appendChild(wordCard);
+            });
+          })
+          .catch(error => {
+            chapterContent.innerHTML = '<div class="error-message">加载章节内容失败，请稍后再试。</div>';
+            console.error('加载章节失败:', error);
+          });
+      }
+    }
+
+    // 播放发音
+    function playPronunciation(word) {
+      const audioUrl = `https://dict.youdao.com/dictvoice?audio=${word}&type=2`; // 美式发音
+      const audio = new Audio(audioUrl);
+      audio.play();
+    }
+
+    // 监听键盘事件切换章节
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {  // 左箭头
+        navigateChapter(-1);
+      } else if (event.key === 'ArrowRight') {  // 右箭头
+        navigateChapter(1);
+      }
+    });
+
+    // 切换章节
+    function navigateChapter(direction) {
+      let newChapter = currentChapter + direction;
+      if (newChapter < 1) newChapter = 1;
+      if (newChapter > totalChapters) newChapter = totalChapters;
+
+      currentChapter = newChapter;
+      chapterSelect.value = currentChapter; // 更新下拉框选择
+      loadChapter(); // 加载新章节内容
+    }
+
+    // 初始化加载第一个章节
+    loadChapter();
+  </script>
+</body>
+</html>
